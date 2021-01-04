@@ -32,3 +32,6 @@ def get_closes(client, symbol, interval, timedelta, d1=None):
     df[float_cols] = df[float_cols].astype(float)
     df[int_cols] = df[int_cols].astype(int)
     return df[["t1", "c"]]
+
+def get_log_returns(returns):
+    return np.log(returns[1:]/returns[:-1])
