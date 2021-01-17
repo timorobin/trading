@@ -14,12 +14,15 @@ class MongoCache:
     def __len__(self):
         return len(self.cache)
     
-    def append(self, item, exchange_name=None, ti=None):
+    def append(self, item):
         self.cache.append(item)
         if len(self) >= self.empty_every:
+            num_saved = len(self)
             DataPoint.objects.insert(self.cache)
             self.cache = []
-            print(f"saved {len(self)} datapoints from {exchange_name} at: {dateparser.parse(str(ti))}")
+            return num_saved
+        return 0
+            
 
 class Snapshotter:
     """
@@ -43,14 +46,16 @@ class Snapshotter:
         self.max_mongo_cache = max_mongo_cache
         self.cache = MongoCache(self.max_mongo_cache)
         
-    def start(self):
+    def start(self, print_saves=False):
         print(f"snapshotter started for env: {self.env.exchange_name}")
         t0 = time.time() # init time
         while self.env.socket_alive:
             ti = time.time()
             if ti - t0 > self.snap_every:
                 snap = DataPoint(data=self.env.data)
-                self.cache.append(snap, self.env.exchange_name, ti)
+                num_saved = self.cache.append(snap)
+                if num_saved and print_saves:
+                    print(f"saved {num_saved} datapoints from {self.env.exchange_name} at: {dateparser.parse(str(ti))}")
                 t0 = ti
 
                 
