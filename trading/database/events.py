@@ -12,12 +12,9 @@ class Trade(EmbeddedDocument):
     trade_time = DateTimeField()
     is_limit_buy = BooleanField()
     
-class LimitOrder(EmbeddedDocument):
-    quantity = FloatField()
-    price = FloatField()
-    
+
 class OrderBook(EmbeddedDocument):
     guid = StringField(default=uuid4().hex)
-    bids = ListField(LimitOrder)
-    asks = ListField(LimitOrder)
+    bids = ListField()
+    asks = ListField()
     

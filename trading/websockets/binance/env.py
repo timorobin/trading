@@ -9,7 +9,7 @@ from binance.depthcache import DepthCacheManager
 
 from trading.websockets.base_env import BaseEnv
 from trading.websockets.binance import utils
-
+from trading.database.data_point import DataPoint
 class Env(BaseEnv):
     """
     This object controls all the 
@@ -23,10 +23,10 @@ class Env(BaseEnv):
         max_trade_history: int
             the numbers of recent trades to keep cached
             default: 5
-            
         max_lob_depth: int
             the max depth for the limit book i.e. 20 means we record 20 bids and 20 asks 
             default: 10
+
         """
         super().__init__("binance_us", tickers)
         API_PUBLIC = os.environ.get("B_PUBLIC_KEY")
@@ -44,16 +44,14 @@ class Env(BaseEnv):
             for ticker in self.tickers
         }
         self.dcms = {}
-        self.bsm_alive = False
+        self.socket_alive = False
         self.multiplex_strs = []
         
     def process_orderbook_message(self, msg):
-        #self.ti = time.time() # most recent timestamp
         orderbook_doc = utils.process_orderbook_message(msg)
         self.data[msg.symbol.lower()]["orderbook"] = orderbook_doc
         
     def process_multiplex_message(self, msg):
-        #self.ti = time.time() # most recent timestamp
         ticker, stream_type, data = utils.format_multiplex_message(msg)
         if stream_type == "trade":
             trade_doc = utils.process_trade_message(data)
@@ -61,7 +59,7 @@ class Env(BaseEnv):
             
     def make_websocket(self):
         self.bsm = BinanceSocketManager(self.client)
-        self.bsm_alive = True
+        self.socket_alive = True
         
     def make_multiplex_stream_strs(self):
         """
@@ -73,7 +71,7 @@ class Env(BaseEnv):
                 self.multiplex_strs.append(stream_str)
                 
     def start_stream(self):
-        if not self.bsm_alive:
+        if not self.socket_alive:
             self.make_websocket()
         
         if not self.multiplex_strs:
@@ -83,7 +81,6 @@ class Env(BaseEnv):
             self.multiplex_strs, 
             self.process_multiplex_message
         )
-        
         for ticker in self.tickers:
             # make this last (it starts bm underhood)
             dcm = DepthCacheManager(
@@ -95,10 +92,16 @@ class Env(BaseEnv):
                 limit=self.max_lob_depth
             )
             self.dcms[ticker] = dcm
-            
+        print(f"started stream for env: {self.exchange_name}")
+        
+    def save_env_snapshot(self):
+        doc = DataPoint(data=self.data)
+        self.mongo_cache.append(doc)
+        
     def close_socket(self):
         self.bsm.close()
-        self.bsm_alive = False
+        self.socket_alive = False
+        print(f"ended stream for env: {self.exchange_name}")
         
         
     

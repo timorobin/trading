@@ -1,7 +1,7 @@
 from operator import itemgetter
 import dateparser
 
-from trading.database.events import Trade, OrderBook, LimitOrder
+from trading.database.events import Trade, OrderBook
 from trading.database.data_point import DataPoint
 
 def get_depth_stream_str(symbol, depth=20, update_interval="1000ms"):
@@ -42,12 +42,14 @@ def process_orderbook_message(msg):
     using depth cache manager object: 
         https://github.com/sammchardy/python-binance/blob/master/binance/depthcache.py
     """
-    bids = [LimitOrder(price=bid[0], quantity=bid[1]) for bid in msg.get_bids()]
-    asks = [LimitOrder(price=ask[0], quantity=ask[1]) for ask in msg.get_asks()]
+    bids = [{"price": bid[0], "quantity": bid[1]} for bid in msg.get_bids()]
+    asks = [{"price": ask[0], "quantity": ask[1]} for ask in msg.get_asks()]
     
     orderbook_doc = OrderBook(bids=bids, asks=asks)    
     return orderbook_doc
 
+def env_data_to_datapoint(self):
+    pass
 #     doc = {
 #         "source": "binance",
 #         "sub_source": "websocket_stream",
