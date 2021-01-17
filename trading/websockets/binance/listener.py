@@ -16,7 +16,7 @@ class Listener:
         self.symbol = symbol
         connect(db_name)
         self.doc_container = []
-        self.max_container_size = 50
+        self.max_container_size = 1000
         
     def process_trade_message(self, msg):
         doc = utils.process_trade_message(msg)
@@ -39,9 +39,9 @@ class Listener:
         
     def make_websocket(self):
         self.bm = BinanceSocketManager(self.binance_client)
-        self.conn_key = self.bm.start_trade_socket(
-            self.symbol, self.process_trade_message
-        )
+#         self.conn_key = self.bm.start_trade_socket(
+#             self.symbol, self.process_trade_message
+#         )
     def start_stream(self):
         # make this last (it starts bm underhood)
         self.dcm = DepthCacheManager(

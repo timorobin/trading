@@ -1,0 +1,15 @@
+# Ideas
+
+### How to handle LOB data ###
+
+# format
+1. format orderbook data into 2 dims: 1 for quantity and 1 for price levels
+
+# normalizing price levels
+1. percent diff from midpoint
+
+# normalizing quantities
+1. percent of total quantity (add total quantity as a percent of daily vol as another feature to account for thin overall orderbooks)
+
+# layer choice
+1. try umap to generate an embedding
